@@ -1,4 +1,5 @@
 import { getConfig } from "../config/index.ts";
+import { getRequestJSON } from "../api/index.ts";
 import { RuntimeConfiguration } from "../config/types/index.ts";
 import { Cliffy, Log } from '../deps.ts';
 import { getLogger, NON_INTERACTIVE, renderInteractiveOutput, renderJsonOutput } from "../util/logging.ts";
@@ -178,4 +179,29 @@ export function apiGetAction<T = unknown>(args: APIGetActionArgs<T>) {
           : 1
         : !!items,
   });
+}
+
+export async function getIdForService(cfg: RuntimeConfiguration, opts: { id: string, name: string }) {
+  if (opts.id && opts.name) {
+    throw new RenderCLIError('You must specify either --id or --name, but not both');
+  }
+  if (opts.id) {
+    return opts.id;
+  }
+  if (!opts.name) {
+    throw new RenderCLIError('You must specify either --id or --name for this command');
+  }
+
+  const logger = await getLogger();
+  logger.debug("dispatching getRequestJSON to look up service ID");
+  const resp = await getRequestJSON(
+    logger,
+    cfg,
+    '/services',
+    { name: opts.name, limit: 100 },
+  );
+  if (resp.length === 0) {
+    throw new RenderCLIError('Service not found')
+  }
+  return resp[0].service.id;
 }

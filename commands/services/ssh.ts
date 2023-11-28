@@ -1,7 +1,7 @@
 import { getConfig, validateRegion } from "../../config/index.ts";
 import { runSSH } from "../../services/ssh/index.ts";
 import { getLogger } from "../../util/logging.ts";
-import { Subcommand } from "./../_helpers.ts";
+import { Subcommand, getIdForService } from "./../_helpers.ts";
 
 const desc = 
 `Opens a SSH session to a Render service.
@@ -15,16 +15,16 @@ export const servicesSshCommand =
     .arguments("[sshArgs...:string]")
     .stopEarly() // args after the service name will not be parsed, including flags
     .option("--preserve-hosts", "Do not update ~/.ssh/known_hosts with Render public keys.")
-    .option("--id <serviceId>", "The service ID to access via SSH.", { required: true })
+    .option("--id <serviceId>", "The ID of the service to access via SSH.")
+    .option("--name <serviceName>", "The name of the service to access via SSH.")
     .action(async (opts, ...sshArgs) => {
       const logger = await getLogger();
       const config = await getConfig();
-
-      const { id } = opts;
+      const serviceId = await getIdForService(config, opts);
 
       const status = await runSSH({
         config,
-        serviceId: id, 
+        serviceId,
         region: validateRegion(opts.region ?? config.profile.defaultRegion),
         sshArgs: sshArgs ?? [],
         noHosts: opts.preserveHosts ?? config.fullConfig.sshPreserveHosts ?? false,

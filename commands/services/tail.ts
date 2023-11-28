@@ -4,7 +4,7 @@ import { UNLOGGABLE_SERVICE_TYPES } from "../../services/constants.ts";
 import { LogTailEntry } from "../../services/types.ts";
 import { ajv, logAjvErrors } from "../../util/ajv.ts";
 import { getLogger } from "../../util/logging.ts";
-import { Subcommand, withConfig } from "../_helpers.ts";
+import { Subcommand, getIdForService, withConfig } from "../_helpers.ts";
 
 const desc = 
 `Tails logs for a given service.
@@ -20,15 +20,17 @@ export const servicesTailCommand =
     .option("--raw", "only prints the bare text of the log to stdout")
     .option("--json", "prints Render's log tail as JSON, one per message", { conflicts: ['raw'] })
     .option("--deploy-id <deployId>", "filter logs to the requested deploy ID", { collect: true })
-    .option("--id <serviceId>", "the service ID whose logs to request", { required: true })
+    .option("--id <serviceId>", "the service ID whose logs to request")
+    .option("--name <serviceName:string>", "the name of the service whose logs to request")
     .action((opts) => withConfig(async (cfg) => {
       const logger = await getLogger();
       const apiKey = apiKeyOrThrow(cfg);
+      const serviceId = await getIdForService(cfg, opts);
 
       opts.deployId = opts.deployId ?? [];
       const deployIds = opts.deployId.length > 0 ? new Set(opts.deployId ?? []) : null;
 
-      const url = `wss://${apiHost(cfg)}/v1/services/${opts.id}/logs/tail`;
+      const url = `wss://${apiHost(cfg)}/v1/services/${serviceId}/logs/tail`;
       logger.debug(`tail url: ${url}, profile name: ${cfg.profileName}`);
 
       await handleApiErrors(logger, async () => {
@@ -36,13 +38,13 @@ export const servicesTailCommand =
         const service = (await getRequestJSON(
           logger,
           cfg,
-          `/services/${opts.id}`,
+          `/services/${serviceId}`,
         // TODO: resolve later when API clients are functional
         // deno-lint-ignore no-explicit-any
         )) as any;
 
         if (UNLOGGABLE_SERVICE_TYPES.has(service.type)) {
-          throw new RenderCLIError(`Service '${opts.id}' is of type '${service.type}', which has no logs.`);
+          throw new RenderCLIError(`Service '${opts.serviceName || serviceId}' is of type '${service.type}', which has no logs.`);
         }
 
         const stream = new WebSocketStream(
