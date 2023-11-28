@@ -1,4 +1,4 @@
-import { apiGetAction, Subcommand } from "../_helpers.ts";
+import { apiGetAction, getIdForService, Subcommand } from "../_helpers.ts";
 import { getConfig } from "../../config/index.ts";
 import { getRequestJSONList } from "../../api/index.ts";
 import { getLogger } from "../../util/logging.ts";
@@ -20,8 +20,11 @@ export const deploysListCommand =
     .group("API parameters")
     .option(
       "--service-id <serviceId>",
-      "the service whose deploys to retrieve",
-      { required: true },
+      "ID of the service whose deploys to retrieve",
+    )
+    .option(
+      "--service-name <serviceName>",
+      "name of the service whose deploys to retrieve",
     )
     .option(
       "--start-time <timestamp:number>", "start of the time range to return"
@@ -35,13 +38,14 @@ export const deploysListCommand =
       processing: async () => {
         const cfg = await getConfig();
         const logger = await getLogger();
+        const serviceId = await getIdForService(cfg, opts.serviceId, opts.serviceName);
 
         logger.debug("dispatching getRequestJSONList");
         const ret = await getRequestJSONList(
           logger,
           cfg,
           'deploy',
-          `/services/${opts.serviceId}/deploys`,
+          `/services/${serviceId}/deploys`,
           {
             startTime: opts.startTime,
             endTime: opts.endTime,
