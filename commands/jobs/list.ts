@@ -1,4 +1,4 @@
-import { apiGetAction, Subcommand } from "../_helpers.ts";
+import { apiGetAction, getIdForService, Subcommand } from "../_helpers.ts";
 import { getConfig } from "../../config/index.ts";
 import { getRequestJSONList } from "../../api/index.ts";
 import { getLogger } from "../../util/logging.ts";
@@ -18,11 +18,8 @@ export const jobsListCommand =
       default: ['id', 'startCommand', 'planId', 'status', 'finishedAt'],
     })
     .group("API parameters")
-    .option(
-      "--service-id <serviceId>",
-      "the service whose deploys to retrieve",
-      { required: true },
-    )
+    .option("--service-id <serviceId>", "ID of the service whose jobs to retrieve")
+    .option("--service-name <serviceId>", "name of the service whose jobs to retrieve")
     .option("--status <status:string[]>", "'pending', 'running', 'succeeded', or 'failed'", { collect: true })
     .option("--created-before <datetime>", "jobs created before (ISO8601)")
     .option("--created-after <datetime>", "jobs created after (ISO8601)")
@@ -36,13 +33,14 @@ export const jobsListCommand =
       processing: async () => {
         const cfg = await getConfig();
         const logger = await getLogger();
+        const serviceId = await getIdForService(cfg, opts.serviceId, opts.serviceName);
 
         logger.debug("dispatching getRequestJSONList");
         const ret = await getRequestJSONList(
           logger,
           cfg,
           'job',
-          `/services/${opts.serviceId}/jobs`,
+          `/services/${serviceId}/jobs`,
           {
             status: opts.status?.flat(Infinity),
             createdBefore: opts.createdBefore,
