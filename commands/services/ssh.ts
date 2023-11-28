@@ -20,7 +20,7 @@ export const servicesSshCommand =
     .action(async (opts, ...sshArgs) => {
       const logger = await getLogger();
       const config = await getConfig();
-      const serviceId = await getIdForService(config, opts);
+      const serviceId = await getIdForService(config, opts.id, opts.name);
 
       const status = await runSSH({
         config,

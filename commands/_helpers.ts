@@ -181,15 +181,15 @@ export function apiGetAction<T = unknown>(args: APIGetActionArgs<T>) {
   });
 }
 
-export async function getIdForService(cfg: RuntimeConfiguration, opts: { id: string, name: string }) {
-  if (opts.id && opts.name) {
-    throw new RenderCLIError('You must specify either --id or --name, but not both');
+export async function getIdForService(cfg: RuntimeConfiguration, serviceId: string, serviceName: string) {
+  if (serviceId && serviceName) {
+    throw new RenderCLIError('You must specify either a service ID or service name, but not both');
   }
-  if (opts.id) {
-    return opts.id;
+  if (serviceId) {
+    return serviceId;
   }
-  if (!opts.name) {
-    throw new RenderCLIError('You must specify either --id or --name for this command');
+  if (!serviceName) {
+    throw new RenderCLIError('You must specify either a service ID or service name for this command');
   }
 
   const logger = await getLogger();
@@ -198,7 +198,7 @@ export async function getIdForService(cfg: RuntimeConfiguration, opts: { id: str
     logger,
     cfg,
     '/services',
-    { name: opts.name, limit: 100 },
+    { name: serviceName, limit: 100 },
   );
   if (resp.length === 0) {
     throw new RenderCLIError('Service not found')

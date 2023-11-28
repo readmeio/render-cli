@@ -18,7 +18,7 @@ export const servicesShowCommand =
       processing: async () => {
         const cfg = await getConfig();
         const logger = await getLogger();
-        const serviceId = await getIdForService(cfg, opts);
+        const serviceId = await getIdForService(cfg, opts.id, opts.name);
 
         logger.debug("dispatching getRequestJSON");
         const ret = await getRequestJSON(

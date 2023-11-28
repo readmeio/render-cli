@@ -1,4 +1,4 @@
-import { apiGetAction, Subcommand } from "../_helpers.ts";
+import { apiGetAction, getIdForService, Subcommand } from "../_helpers.ts";
 import { getConfig } from "../../config/index.ts";
 import { getRequestJSONList } from "../../api/index.ts";
 import { getLogger } from "../../util/logging.ts";
@@ -18,11 +18,8 @@ export const customDomainsListCommand =
       default: ['id', 'name', 'createdAt', 'verificationStatus'],
     })
     .group("API parameters")
-    .option(
-      "--service-id <serviceId>",
-      "the service whose deploys to retrieve",
-      { required: true },
-    )
+    .option("--service-id <serviceId>", "ID of the service whose deploys to retrieve")
+    .option("--service-name <serviceName>", "name of the service whose deploys to retrieve")
     .option("--name <name:string[]>", "domain names to filter by", { collect: true })
     .option("--domain-type <name:string[]>", "'apex' or 'subdomain'", { collect: true })
     .option("--verification-status <name:string[]>", "'verified' or 'unverified'", { collect: true })
@@ -34,13 +31,14 @@ export const customDomainsListCommand =
       processing: async () => {
         const cfg = await getConfig();
         const logger = await getLogger();
+        const serviceId = await getIdForService(cfg, opts.serviceId, opts.serviceName);
 
         logger.debug("dispatching getRequestJSONList");
         const ret = await getRequestJSONList(
           logger,
           cfg,
           'customDomain',
-          `/services/${opts.serviceId}/custom-domains`,
+          `/services/${serviceId}/custom-domains`,
           {
             name: opts.name?.flat(Infinity),
             domainType: opts.domainType?.flat(Infinity),

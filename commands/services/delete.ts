@@ -18,7 +18,7 @@ export const servicesDeleteCommand = new Subcommand()
       processing: async () => {
         const cfg = await getConfig();
         const logger = await getLogger();
-        const serviceId = await getIdForService(cfg, opts);
+        const serviceId = await getIdForService(cfg, opts.id, opts.name);
 
         const ret = await deleteRequestRaw(logger, cfg, `/services/${serviceId}`);
         logger.debug(`deleted service ${opts.serviceName || serviceId}: ${ret.status}`);

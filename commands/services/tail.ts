@@ -20,12 +20,12 @@ export const servicesTailCommand =
     .option("--raw", "only prints the bare text of the log to stdout")
     .option("--json", "prints Render's log tail as JSON, one per message", { conflicts: ['raw'] })
     .option("--deploy-id <deployId>", "filter logs to the requested deploy ID", { collect: true })
-    .option("--id <serviceId>", "the service ID whose logs to request")
+    .option("--id <serviceId:string>", "the service ID whose logs to request")
     .option("--name <serviceName:string>", "the name of the service whose logs to request")
     .action((opts) => withConfig(async (cfg) => {
       const logger = await getLogger();
       const apiKey = apiKeyOrThrow(cfg);
-      const serviceId = await getIdForService(cfg, opts);
+      const serviceId = await getIdForService(cfg, opts.id, opts.name);
 
       opts.deployId = opts.deployId ?? [];
       const deployIds = opts.deployId.length > 0 ? new Set(opts.deployId ?? []) : null;
